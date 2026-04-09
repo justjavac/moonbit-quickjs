@@ -1,0 +1,173 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "justjavac/quickjs"
+
+// Values
+pub let eval_flag_async : Int
+
+pub let eval_flag_backtrace_barrier : Int
+
+pub let eval_flag_compile_only : Int
+
+pub let eval_flag_strict : Int
+
+pub let eval_type_direct : Int
+
+pub let eval_type_global : Int
+
+pub let eval_type_indirect : Int
+
+pub let eval_type_module : Int
+
+pub fn quickjs_context_destroy(Context) -> Unit
+
+pub fn quickjs_context_eval(Context, Bytes, Bytes, Int) -> Value
+
+pub fn quickjs_context_exception_message(Context) -> Bytes
+
+pub fn quickjs_context_get_exception(Context) -> Value
+
+pub fn quickjs_context_get_global_object(Context) -> Value
+
+pub fn quickjs_context_json_stringify(Context, Value) -> Value
+
+pub fn quickjs_context_new(Runtime) -> Context
+
+pub fn quickjs_context_new_array(Context) -> Value
+
+pub fn quickjs_context_new_bool(Context, Bool) -> Value
+
+pub fn quickjs_context_new_float64(Context, Double) -> Value
+
+pub fn quickjs_context_new_int32(Context, Int) -> Value
+
+pub fn quickjs_context_new_null(Context) -> Value
+
+pub fn quickjs_context_new_object(Context) -> Value
+
+pub fn quickjs_context_new_string(Context, Bytes) -> Value
+
+pub fn quickjs_context_new_undefined(Context) -> Value
+
+pub fn quickjs_context_parse_json(Context, Bytes, Bytes) -> Value
+
+pub fn quickjs_runtime_destroy(Runtime) -> Unit
+
+pub fn quickjs_runtime_execute_pending_job(Runtime) -> Int
+
+pub fn quickjs_runtime_is_job_pending(Runtime) -> Bool
+
+pub fn quickjs_runtime_new() -> Runtime
+
+pub fn quickjs_runtime_run_gc(Runtime) -> Unit
+
+pub fn quickjs_runtime_set_can_block(Runtime, Bool) -> Unit
+
+pub fn quickjs_runtime_set_gc_threshold(Runtime, UInt64) -> Unit
+
+pub fn quickjs_runtime_set_info(Runtime, Bytes) -> Unit
+
+pub fn quickjs_runtime_set_max_stack_size(Runtime, UInt64) -> Unit
+
+pub fn quickjs_runtime_set_memory_limit(Runtime, UInt64) -> Unit
+
+pub fn quickjs_runtime_update_stack_top(Runtime) -> Unit
+
+pub fn quickjs_value_destroy(Value) -> Unit
+
+pub fn quickjs_value_dup(Value) -> Value
+
+pub fn quickjs_value_get_property_str(Context, Value, Bytes) -> Value
+
+pub fn quickjs_value_get_property_uint32(Context, Value, UInt) -> Value
+
+pub fn quickjs_value_is_bool(Value) -> Bool
+
+pub fn quickjs_value_is_exception(Value) -> Bool
+
+pub fn quickjs_value_is_null(Value) -> Bool
+
+pub fn quickjs_value_is_number(Value) -> Bool
+
+pub fn quickjs_value_is_object(Value) -> Bool
+
+pub fn quickjs_value_is_string(Value) -> Bool
+
+pub fn quickjs_value_is_undefined(Value) -> Bool
+
+pub fn quickjs_value_set_property_str(Context, Value, Bytes, Value) -> Int
+
+pub fn quickjs_value_set_property_uint32(Context, Value, UInt, Value) -> Int
+
+pub fn quickjs_value_to_bool(Context, Value) -> Bool
+
+pub fn quickjs_value_to_float64(Context, Value) -> Double
+
+pub fn quickjs_value_to_int32(Context, Value) -> Int
+
+pub fn quickjs_value_to_string_lossy(Context, Value) -> Bytes
+
+// Errors
+
+// Types and methods
+#external
+pub type Context
+pub fn Context::destroy(Self) -> Unit
+pub fn Context::eval(Self, String, filename? : String, flags? : Int) -> Value
+pub fn Context::exception_message(Self) -> String
+pub fn Context::get_exception(Self) -> Value
+pub fn Context::global_object(Self) -> Value
+pub fn Context::json_stringify(Self, Value) -> Value
+pub fn Context::new(Runtime) -> Self
+pub fn Context::new_array(Self) -> Value
+pub fn Context::new_bool(Self, Bool) -> Value
+pub fn Context::new_float64(Self, Double) -> Value
+pub fn Context::new_int32(Self, Int) -> Value
+pub fn Context::new_object(Self) -> Value
+pub fn Context::new_string(Self, String) -> Value
+pub fn Context::null(Self) -> Value
+pub fn Context::parse_json(Self, String, filename? : String) -> Value
+pub fn Context::to_bool(Self, Value) -> Bool
+pub fn Context::to_float64(Self, Value) -> Double
+pub fn Context::to_int32(Self, Value) -> Int
+pub fn Context::to_string_lossy(Self, Value) -> String
+pub fn Context::undefined(Self) -> Value
+
+#external
+pub type Runtime
+pub fn Runtime::destroy(Self) -> Unit
+pub fn Runtime::execute_pending_job(Self) -> Int
+pub fn Runtime::is_job_pending(Self) -> Bool
+pub fn Runtime::new() -> Self
+pub fn Runtime::new_context(Self) -> Context
+pub fn Runtime::run_gc(Self) -> Unit
+pub fn Runtime::set_can_block(Self, Bool) -> Unit
+pub fn Runtime::set_gc_threshold(Self, UInt64) -> Unit
+pub fn Runtime::set_info(Self, String) -> Unit
+pub fn Runtime::set_max_stack_size(Self, UInt64) -> Unit
+pub fn Runtime::set_memory_limit(Self, UInt64) -> Unit
+pub fn Runtime::update_stack_top(Self) -> Unit
+
+#external
+pub type Value
+pub fn Value::destroy(Self) -> Unit
+pub fn Value::dup(Self) -> Self
+pub fn Value::get_index(Self, Context, UInt) -> Self
+pub fn Value::get_property(Self, Context, String) -> Self
+pub fn Value::is_bool(Self) -> Bool
+pub fn Value::is_exception(Self) -> Bool
+pub fn Value::is_null(Self) -> Bool
+pub fn Value::is_number(Self) -> Bool
+pub fn Value::is_object(Self) -> Bool
+pub fn Value::is_string(Self) -> Bool
+pub fn Value::is_undefined(Self) -> Bool
+pub fn Value::set_index(Self, Context, UInt, Self) -> Int
+pub fn Value::set_property(Self, Context, String, Self) -> Int
+pub fn Value::to_bool(Self, Context) -> Bool
+pub fn Value::to_float64(Self, Context) -> Double
+pub fn Value::to_int32(Self, Context) -> Int
+pub fn Value::to_string_lossy(Self, Context) -> String
+
+// Type aliases
+
+// Traits
+
