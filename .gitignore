@@ -1,5 +1,6 @@
 /.mooncakes/
 /_build/
+/src/pkg.generated.mbti
 /_tmp_qjs_check.c
 /_tmp_qjs_check.exe
 /_tmp_qjs_check.obj
