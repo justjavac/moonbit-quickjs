@@ -1,0 +1,7 @@
+target=macos-universal
+quickjs_git_tag=d7ae12ae71dfd6ab2997527d295014a8996fa0f9
+quickjs_version=2025-09-13
+library_dir=lib
+include_dir=include/quickjs
+exported_header=quickjs.h
+No extra system libraries usually required for the core archive

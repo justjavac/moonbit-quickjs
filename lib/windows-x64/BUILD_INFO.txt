@@ -1,0 +1,7 @@
+target=windows-x64
+quickjs_git_tag=d7ae12ae71dfd6ab2997527d295014a8996fa0f9
+quickjs_version=2025-09-13
+library_dir=lib
+include_dir=include/quickjs
+exported_header=quickjs.h
+MSVC-compatible build; atomics support disabled; quickjs-libc.c excluded
