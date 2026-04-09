@@ -2,7 +2,7 @@
   "name": "justjavac/quickjs",
   "version": "0.1.0",
   "deps": {
-    "justjavac/ffi": "0.2.0"
+    "justjavac/ffi": "0.2.1"
   },
   "repository": "https://github.com/justjavac/moonbit-quickjs",
   "license": "MIT",
@@ -14,8 +14,8 @@
   ],
   "description": "MoonBit bindings for the QuickJS JavaScript engine.",
   "source": "src",
-  "--moonbit-unstable-prebuild": "native_link_config.mjs",
+  "supported_targets": "+native",
   "warn-list": "",
   "preferred-target": "native",
-  "supported_targets": "+native"
+  "--moonbit-unstable-prebuild": "native_link_config.mjs"
 }
