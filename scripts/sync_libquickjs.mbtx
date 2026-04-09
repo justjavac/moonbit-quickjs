@@ -1,7 +1,11 @@
 ///|
 import {
-  "moonbitlang/core/json" @json,
-  "moonbitlang/x@0.4.41/sys",
+  "moonbitlang/async" @async,
+  "moonbitlang/async/fs" @fs,
+  "moonbitlang/async/io" @io,
+  "moonbitlang/async/process" @process,
+  "moonbitlang/x@0.4.41/path" @path,
+  "moonbitlang/x@0.4.41/sys" @sys,
 }
 
 ///|
@@ -24,8 +28,7 @@ struct CommandResult {
   status : Int
   stdout : String
   stderr : String
-  error : String
-} derive(FromJson)
+}
 
 ///|
 let artifacts : Array[ArtifactSpec] = [
@@ -50,7 +53,17 @@ let artifacts : Array[ArtifactSpec] = [
 ]
 
 ///|
-fn main() -> Unit raise {
+async fn main {
+  main_impl() catch {
+    err => {
+      println(err)
+      @sys.exit(1)
+    }
+  }
+}
+
+///|
+async fn main_impl() -> Unit raise {
   let config = parse_args(@sys.get_cli_args())
   let resolved_run_id = match config.run_id {
     Some(run_id) => run_id
@@ -135,7 +148,7 @@ fn required_arg(args : Array[String], index : Int, flag : String) -> String rais
 ///|
 fn print_usage() -> Unit {
   let usage =
-    #|Usage: moon run --target js scripts/sync_libquickjs.mbtx [--repo owner/name] [--run-id 123] [--root /path/to/repo]
+    #|Usage: moon run --target native scripts/sync_libquickjs.mbtx [--repo owner/name] [--run-id 123] [--root /path/to/repo]
     #|
     #|Downloads the latest successful QuickJS build artifacts from GitHub Actions
     #|and syncs vendored libraries plus src/quickjs.h into this repository.
@@ -152,7 +165,7 @@ fn print_usage() -> Unit {
 }
 
 ///|
-fn latest_successful_run_id(repo : String) -> String raise {
+async fn latest_successful_run_id(repo : String) -> String raise {
   let output = run_checked(
     "gh",
     [
@@ -182,7 +195,7 @@ fn latest_successful_run_id(repo : String) -> String raise {
 }
 
 ///|
-fn copy_artifact(
+async fn copy_artifact(
   download_root : String,
   lib_root : String,
   artifact : ArtifactSpec,
@@ -206,7 +219,7 @@ fn copy_artifact(
 }
 
 ///|
-fn copy_header(download_root : String, root : String) -> Unit raise {
+async fn copy_header(download_root : String, root : String) -> Unit raise {
   for artifact in artifacts {
     let candidate = join_paths([
       download_root,
@@ -228,7 +241,7 @@ fn copy_header(download_root : String, root : String) -> Unit raise {
 }
 
 ///|
-fn copy_required_file(
+async fn copy_required_file(
   source : String,
   target : String,
   description : String,
@@ -238,33 +251,35 @@ fn copy_required_file(
 }
 
 ///|
-fn require_exists(path : String, description : String) -> Unit raise {
+async fn require_exists(path : String, description : String) -> Unit raise {
   if !path_exists(path) {
     die("\{description} is missing: \{path}")
   }
 }
 
 ///|
-fn[T : FromJson] decode_json(text : String) -> T {
-  try! @json.from_json(try! @json.parse(text))
-}
-
-///|
-fn run_checked(
+async fn run_checked(
   command : String,
   args : Array[String],
   cwd? : String = "",
   summary~ : String,
 ) -> CommandResult raise {
-  let result : CommandResult = decode_json(run_command_json(command, args, cwd))
+  let (status, stdout, stderr) = if cwd == "" {
+    @process.collect_output(command, args)
+  } else {
+    @process.collect_output(command, args, cwd=cwd)
+  }
+  let result : CommandResult = {
+    status,
+    stdout: stdout.text(),
+    stderr: stderr.text(),
+  }
   if result.status != 0 {
     let details =
       if result.stderr != "" {
         result.stderr
       } else if result.stdout != "" {
         result.stdout
-      } else if result.error != "" {
-        result.error
       } else {
         "command exited with status \{result.status}"
       }
@@ -288,63 +303,51 @@ fn[T] die(message : String) -> T raise {
 }
 
 ///|
-extern "js" fn current_working_dir() -> String =
-  #| function() {
-  #|   return process.cwd();
-  #| }
+fn current_working_dir() -> String {
+  let cwd : @path.Path = "."
+  cwd.resolve().normalize().to_string()
+}
 
 ///|
-extern "js" fn join_paths(parts : Array[String]) -> String =
-  #| function(parts) {
-  #|   const path = require("node:path");
-  #|   return path.join(...parts);
-  #| }
+fn join_paths(parts : Array[String]) -> String {
+  guard !parts.is_empty() else { "" }
+  let mut joined : @path.Path = parts[0]
+  for index = 1; index < parts.length(); {
+    joined = joined.join(parts[index])
+    continue index + 1
+  }
+  joined.normalize().to_string()
+}
 
 ///|
-extern "js" fn path_exists(path : String) -> Bool =
-  #| function(path) {
-  #|   const fs = require("node:fs");
-  #|   return fs.existsSync(path);
-  #| }
+async fn path_exists(path : String) -> Bool {
+  @fs.exists(path)
+}
 
 ///|
-extern "js" fn ensure_dir(path : String) -> Unit =
-  #| function(path) {
-  #|   const fs = require("node:fs");
-  #|   fs.mkdirSync(path, { recursive: true });
-  #| }
+async fn ensure_dir(path : String) -> Unit raise {
+  if path_exists(path) {
+    guard @fs.kind(path) is Directory else {
+      die("Expected directory but found non-directory path: \{path}")
+    }
+  } else {
+    @fs.mkdir(path, permission=0o755, recursive=true)
+  }
+}
 
 ///|
-extern "js" fn remove_tree(path : String) -> Unit =
-  #| function(path) {
-  #|   const fs = require("node:fs");
-  #|   fs.rmSync(path, { recursive: true, force: true });
-  #| }
+async fn remove_tree(path : String) -> Unit raise {
+  if path_exists(path) {
+    if @fs.kind(path, follow_symlink=false) is Directory {
+      @fs.rmdir(path, recursive=true)
+    } else {
+      @fs.remove(path)
+    }
+  }
+}
 
 ///|
-extern "js" fn copy_file(source : String, target : String) -> Unit =
-  #| function(source, target) {
-  #|   const fs = require("node:fs");
-  #|   fs.copyFileSync(source, target);
-  #| }
-
-///|
-extern "js" fn run_command_json(
-  command : String,
-  args : Array[String],
-  cwd : String,
-) -> String =
-  #| function(command, args, cwd) {
-  #|   const { spawnSync } = require("node:child_process");
-  #|   const result = spawnSync(command, args, {
-  #|     cwd: cwd === "" ? undefined : cwd,
-  #|     encoding: "utf8",
-  #|     stdio: "pipe",
-  #|   });
-  #|   return JSON.stringify({
-  #|     status: result.status === null ? -1 : result.status,
-  #|     stdout: result.stdout || "",
-  #|     stderr: result.stderr || "",
-  #|     error: result.error ? String(result.error.message || result.error) : "",
-  #|   });
-  #| }
+async fn copy_file(source : String, target : String) -> Unit raise {
+  let content : &@io.Data = @fs.read_file(source)
+  @fs.write_file(target, content, create=0o644, truncate=true)
+}
