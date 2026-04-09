@@ -1,0 +1,23 @@
+codecov:
+  notify:
+    after_n_builds: 3
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+    patch:
+      default:
+        target: auto
+
+flags:
+  linux:
+    paths:
+      - src/
+  macos:
+    paths:
+      - src/
+  windows:
+    paths:
+      - src/

@@ -1,15 +1,22 @@
 # moonbit-quickjs
 
+[![coverage](https://img.shields.io/codecov/c/github/justjavac/moonbit-quickjs/main?label=coverage)](https://codecov.io/gh/justjavac/moonbit-quickjs)
+[![linux](https://img.shields.io/codecov/c/github/justjavac/moonbit-quickjs/main?flag=linux&label=linux)](https://codecov.io/gh/justjavac/moonbit-quickjs)
+[![macos](https://img.shields.io/codecov/c/github/justjavac/moonbit-quickjs/main?flag=macos&label=macos)](https://codecov.io/gh/justjavac/moonbit-quickjs)
+[![windows](https://img.shields.io/codecov/c/github/justjavac/moonbit-quickjs/main?flag=windows&label=windows)](https://codecov.io/gh/justjavac/moonbit-quickjs)
+
 MoonBit bindings for the [QuickJS](https://bellard.org/quickjs/) JavaScript engine.
 
-This repository packages a native QuickJS integration for MoonBit and vendors prebuilt QuickJS libraries for the platforms currently supported by the package.
+This package provides a small high-level MoonBit API over QuickJS runtimes,
+contexts, and values. It ships vendored native libraries for the supported
+platforms so downstream users do not need to build QuickJS themselves.
 
 ## Features
 
-- Native-only MoonBit package with QuickJS linked through FFI
+- Native-only MoonBit package built on top of a small FFI surface
 - Vendored QuickJS libraries for Windows, Linux, and macOS
-- Small high-level API over runtimes, contexts, and JavaScript values
-- Helper script for refreshing vendored libraries from GitHub Actions artifacts
+- Explicit lifecycle management for runtimes, contexts, and values
+- Routines for evaluation, JSON parsing, property access, and Promise jobs
 
 ## Supported Targets and Platforms
 
@@ -28,104 +35,145 @@ Vendored libraries are included for:
 
 Add the package to your MoonBit module:
 
-```moonbit
+```bssh
 moon add justjavac/quickjs
 ```
 
 ## Quick Start
 
-Import the package and evaluate a simple expression:
+```moonbit
+let runtime = @quickjs.Runtime::new()
+let context = runtime.new_context()
 
-```moonbit skip
-test {
-  let runtime = @quickjs.Runtime::new()
-  let context = runtime.new_context()
-
-  let result = context.eval("1 + 2")
-  guard !result.is_exception() else {
-    fail(context.exception_message())
-  }
-
-  inspect(result.to_int32(context), content="3")
-
+let result = context.eval("1 + 2")
+guard !result.is_exception() else {
+  let message = context.exception_message()
   result.destroy()
-  context.destroy()
-  runtime.destroy()
+  fail(message)
 }
+
+inspect(result.to_int32(context), content="3")
+
+result.destroy()
+context.destroy()
+runtime.destroy()
 ```
 
-## Working with Values
+## Lifecycle Model
 
-The package exposes three core external types:
+The public API intentionally exposes three core handles:
 
-- `Runtime`
-- `Context`
-- `Value`
+- `Runtime`: owns QuickJS allocator state and the pending job queue
+- `Context`: owns an execution scope and exception state
+- `Value`: wraps a JavaScript value
 
-Typical usage looks like this:
+Typical usage follows this sequence:
 
 1. Create a `Runtime`
-2. Create a `Context` from the runtime
-3. Evaluate code or create values through the context
-4. Read properties or convert results back into MoonBit values
-5. Explicitly destroy `Value`, `Context`, and `Runtime` handles when done
+2. Create a `Context` from that runtime
+3. Evaluate code or construct values through the context
+4. Convert, inspect, or traverse returned `Value` handles
+5. Destroy every `Value`, then destroy the `Context`, then destroy the `Runtime`
 
-Example with JSON and property access:
+## Common Operations
 
-```moonbit skip
-test {
-  let runtime = @quickjs.Runtime::new()
-  let context = runtime.new_context()
+### Evaluate JavaScript
 
-  let parsed = context.parse_json("{\"name\":\"moonbit\",\"items\":[1,2,3]}")
-  guard !parsed.is_exception() else {
-    fail(context.exception_message())
-  }
+```moonbit
+let value = context.eval("40 + 2")
+guard !value.is_exception() else {
+  let message = context.exception_message()
+  value.destroy()
+  fail(message)
+}
+inspect(value.to_int32(context), content="42")
+value.destroy()
+```
 
-  let name = parsed.get_property(context, "name")
-  let items = parsed.get_property(context, "items")
-  let second = items.get_index(context, 1)
+### Work with objects and arrays
 
-  inspect(name.to_string_lossy(context), content="moonbit")
-  inspect(second.to_int32(context), content="2")
+```moonbit
+let object = context.new_object()
+let items = context.new_array()
+let name = context.new_string("moonbit")
 
-  second.destroy()
-  items.destroy()
-  name.destroy()
-  parsed.destroy()
-  context.destroy()
-  runtime.destroy()
+ignore(items.set_index(context, 0, name))
+ignore(object.set_property(context, "items", items))
+
+let stringified = context.json_stringify(object)
+println(stringified.to_string_lossy(context))
+
+stringified.destroy()
+name.destroy()
+items.destroy()
+object.destroy()
+```
+
+### Handle evaluation errors
+
+`Context::get_exception()` and `Context::exception_message()` both consume the
+pending QuickJS exception, so read the exception in the form you want and then
+continue.
+
+```moonbit
+let value = context.eval("throw new Error('boom')")
+if value.is_exception() {
+  value.destroy()
+  println(context.exception_message())
+} else {
+  value.destroy()
 }
 ```
 
-## API Overview
+### Drive Promise jobs
 
-The public API currently includes:
+QuickJS does not run Promise jobs on its own when embedded this way. Use the
+runtime job helpers to drain the queue:
 
-- Runtime lifecycle: `Runtime::new`, `Runtime::destroy`, `Runtime::new_context`
-- Runtime tuning: `set_info`, `set_memory_limit`, `set_gc_threshold`, `set_max_stack_size`, `set_can_block`
-- Runtime execution helpers: `update_stack_top`, `run_gc`, `is_job_pending`, `execute_pending_job`
-- Context lifecycle and evaluation: `Context::new`, `Context::destroy`, `Context::eval`
-- Context value constructors: `new_object`, `new_array`, `new_string`, `new_int32`, `new_float64`, `new_bool`, `null`, `undefined`
-- JSON helpers: `parse_json`, `json_stringify`
-- Exception handling: `get_exception`, `exception_message`
-- Value inspection and conversion: `is_*`, `to_int32`, `to_float64`, `to_bool`, `to_string_lossy`
-- Object and array access: `get_property`, `set_property`, `get_index`, `set_index`
+```moonbit
+let setup = context.eval(
+  "globalThis.answer = 0; Promise.resolve(41).then(v => { globalThis.answer = v + 1; });",
+)
+guard !setup.is_exception() else {
+  let message = context.exception_message()
+  setup.destroy()
+  fail(message)
+}
+setup.destroy()
 
-Evaluation flags are also exported:
+while runtime.is_job_pending() {
+  ignore(runtime.execute_pending_job())
+}
+```
 
-- `eval_type_global`
-- `eval_type_module`
-- `eval_type_direct`
-- `eval_type_indirect`
-- `eval_flag_strict`
-- `eval_flag_compile_only`
-- `eval_flag_backtrace_barrier`
-- `eval_flag_async`
+## Examples
+
+Runnable examples live under [`examples/`](./examples):
+
+```text
+moon -C examples run basic_eval
+moon -C examples run json_bridge
+moon -C examples run error_handling
+moon -C examples run pending_jobs
+```
+
+## Development
+
+Useful commands while working on the package:
+
+```text
+moon check --target native
+moon test --target native -v
+moon coverage analyze -p justjavac/quickjs -- -f summary
+moon coverage analyze -p justjavac/quickjs -- -f cobertura -o coverage-windows.xml
+moon -C examples check --target native
+moon run --target native scripts/sync_libquickjs.mbtx help
+```
 
 ## Refreshing Vendored QuickJS Artifacts
 
-The repository includes [`sync_libquickjs.mbtx`](./scripts/sync_libquickjs.mbtx), a native MoonBit script that:
+The repository includes [`sync_libquickjs.mbtx`](./scripts/sync_libquickjs.mbtx),
+a native MoonBit script that:
 
 - resolves the latest successful `build` run from `justjavac/libquickjs` by default
 - downloads the workflow artifacts with `gh run download`
@@ -148,19 +196,6 @@ Requirements:
 
 More script-specific notes live in [scripts/README.mbt.md](./scripts/README.mbt.md).
 
-## Development
+## License
 
-Useful commands while working on the package:
-
-```text
-moon check --target native
-moon test --target native
-moon test --target native src/quickjs_smoke_test.mbt
-moon run --target native scripts/sync_libquickjs.mbtx help
-```
-
-## Notes
-
-- This package is intentionally native-only.
-- Resource cleanup is explicit; destroy QuickJS handles when they are no longer needed.
-- Vendored libraries are part of the repository so downstream users do not need to build QuickJS themselves for the supported platforms.
+This package is licensed under the MIT License. See [LICENSE](./LICENSE) for details.

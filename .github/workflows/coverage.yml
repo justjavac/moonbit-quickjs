@@ -1,0 +1,75 @@
+name: coverage
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  native:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            flag: linux
+            coverage_file: coverage-linux.xml
+          - os: macos-latest
+            flag: macos
+            coverage_file: coverage-macos.xml
+          - os: windows-latest
+            flag: windows
+            coverage_file: coverage-windows.xml
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install MoonBit on Unix
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: Install MoonBit on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+          irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
+          "$env:USERPROFILE\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Show tool versions
+        shell: bash
+        run: |
+          moon version
+          git --version
+
+      - name: Run package tests
+        shell: bash
+        run: moon test --target native -v
+
+      - name: Check runnable examples
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          moon -C examples check --target native
+          moon -C examples run basic_eval
+          moon -C examples run json_bridge
+          moon -C examples run error_handling
+          moon -C examples run pending_jobs
+
+      - name: Generate Cobertura coverage
+        shell: bash
+        run: moon coverage analyze -p justjavac/quickjs -- -f cobertura -o "${{ matrix.coverage_file }}"
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ${{ matrix.coverage_file }}
+          flags: ${{ matrix.flag }}
+          name: ${{ matrix.flag }}
+          disable_search: true
