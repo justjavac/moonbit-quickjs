@@ -42,18 +42,49 @@ jobs:
           irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
           "$env:USERPROFILE\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
+      - name: Configure MSVC environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          $installPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $installPath) {
+            throw 'Visual Studio with C++ tools was not found.'
+          }
+          $vcvars = Join-Path $installPath 'VC\Auxiliary\Build\vcvars64.bat'
+          $captured = @{}
+          cmd /c "`"$vcvars`" >nul && set" | ForEach-Object {
+            if ($_ -match '^(.*?)=(.*)$') {
+              $captured[$matches[1]] = $matches[2]
+            }
+          }
+          foreach ($name in @('Path', 'INCLUDE', 'LIB', 'LIBPATH', 'VCINSTALLDIR', 'VCToolsInstallDir', 'WindowsSdkDir', 'WindowsSDKVersion', 'UniversalCRTSdkDir', 'UCRTVersion')) {
+            if ($captured.ContainsKey($name)) {
+              "$name=$($captured[$name])" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            }
+          }
+
       - name: Show tool versions
         shell: bash
         run: |
           moon version
           git --version
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            where.exe cl
+          fi
 
       - name: Update MoonBit registry index
         shell: bash
         run: moon update
 
-      - name: Run package tests
+      - name: Run package tests on Unix
+        if: runner.os != 'Windows'
         shell: bash
+        run: moon test --target native -v
+
+      - name: Run package tests on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
         run: moon test --target native -v
 
       - name: Check runnable examples
@@ -66,8 +97,14 @@ jobs:
           moon -C examples run error_handling
           moon -C examples run pending_jobs
 
-      - name: Generate Cobertura coverage
+      - name: Generate Cobertura coverage on Unix
+        if: runner.os != 'Windows'
         shell: bash
+        run: moon coverage analyze -p justjavac/quickjs -- -f cobertura -o "${{ matrix.coverage_file }}"
+
+      - name: Generate Cobertura coverage on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
         run: moon coverage analyze -p justjavac/quickjs -- -f cobertura -o "${{ matrix.coverage_file }}"
 
       - name: Upload coverage to Codecov
