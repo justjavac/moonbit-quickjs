@@ -48,6 +48,10 @@ jobs:
           moon version
           git --version
 
+      - name: Update MoonBit registry index
+        shell: bash
+        run: moon update
+
       - name: Run package tests
         shell: bash
         run: moon test --target native -v
