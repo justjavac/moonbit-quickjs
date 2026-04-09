@@ -1,0 +1,22 @@
+{
+  "name": "justjavac/quickjs_examples",
+  "version": "0.1.0",
+  "deps": {
+    "justjavac/quickjs": {
+      "path": ".."
+    }
+  },
+  "readme": "README.md",
+  "repository": "https://github.com/justjavac/moonbit-quickjs",
+  "license": "MIT",
+  "keywords": [
+    "quickjs",
+    "examples",
+    "ffi",
+    "native"
+  ],
+  "description": "Runnable examples for justjavac/quickjs.",
+  "source": ".",
+  "supported_targets": "+native",
+  "preferred-target": "native"
+}
