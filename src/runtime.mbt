@@ -2,7 +2,8 @@
 /// Creates a fresh QuickJS runtime.
 ///
 /// The runtime owns allocator state, garbage collection, and the pending job
-/// queue shared by contexts created from it.
+/// queue shared by contexts created from it. Create one runtime first, then
+/// derive the contexts that should share its memory limits and job queue.
 pub fn Runtime::new() -> Runtime {
   quickjs_runtime_new()
 }
@@ -11,7 +12,7 @@ pub fn Runtime::new() -> Runtime {
 /// Destroys the runtime and releases its native resources.
 ///
 /// Destroy every context and value created from the runtime before calling
-/// this method.
+/// this method. After destruction the runtime handle must not be used again.
 pub fn Runtime::destroy(self : Runtime) -> Unit {
   quickjs_runtime_destroy(self)
 }
@@ -89,7 +90,32 @@ pub fn Runtime::is_job_pending(self : Runtime) -> Bool {
 ///|
 /// Executes one pending job from the QuickJS job queue.
 ///
-/// The returned integer is the raw QuickJS status code for that job.
+/// Hosts that manually drive Promise resolution typically call this in a loop
+/// while `Runtime::is_job_pending()` remains true. The returned integer is the
+/// raw QuickJS status code for that job.
+///
+/// # Example
+/// ```mbt check
+/// test {
+///   let runtime = Runtime::new()
+///   defer runtime.destroy()
+///   let context = runtime.new_context()
+///   defer context.destroy()
+///
+///   let setup = context.eval(
+///     "globalThis.pending = 0; Promise.resolve(41).then(v => { globalThis.pending = v + 1; });",
+///   )
+///   defer setup.destroy()
+///
+///   while runtime.is_job_pending() {
+///     ignore(runtime.execute_pending_job())
+///   }
+///
+///   let result = context.eval("pending")
+///   defer result.destroy()
+///   inspect(result.to_int32(context), content="42")
+/// }
+/// ```
 pub fn Runtime::execute_pending_job(self : Runtime) -> Int {
   quickjs_runtime_execute_pending_job(self)
 }
@@ -98,7 +124,8 @@ pub fn Runtime::execute_pending_job(self : Runtime) -> Int {
 /// Creates a new execution context owned by this runtime.
 ///
 /// This is the usual entry point for evaluating scripts and constructing
-/// JavaScript values.
+/// JavaScript values. Each context gets its own globals while still sharing
+/// the runtime scheduler and memory configuration.
 pub fn Runtime::new_context(self : Runtime) -> Context {
   Context::new(self)
 }

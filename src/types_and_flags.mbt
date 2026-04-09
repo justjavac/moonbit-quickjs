@@ -75,7 +75,8 @@ pub type Value
 /// Evaluates code as a global script.
 ///
 /// Use this as the default mode for ordinary snippets that should run against
-/// the current context global object.
+/// the current context global object. Evaluation types occupy the low bits of
+/// the QuickJS flag word and can be combined with `eval_flag_*` constants.
 pub let eval_type_global : Int = 0
 
 ///|
@@ -102,24 +103,30 @@ pub let eval_type_indirect : Int = 3
 /// Requests strict-mode parsing during evaluation.
 ///
 /// Combine this flag with an evaluation type such as `eval_type_global`.
+/// For example, `eval_type_global | eval_flag_strict` evaluates a top-level
+/// script in strict mode.
 pub let eval_flag_strict : Int = 1 << 3
 
 ///|
 /// Compiles the source without executing it immediately.
 ///
-/// This is typically combined with one of the evaluation type constants.
+/// This is typically combined with one of the evaluation type constants when
+/// the host wants syntax validation or precompilation without running the
+/// script body immediately.
 pub let eval_flag_compile_only : Int = 1 << 5
 
 ///|
 /// Prevents the current stack trace from crossing this evaluation boundary.
 ///
 /// This can be useful when embedding QuickJS and controlling how errors are
-/// surfaced back to host code.
+/// surfaced back to host code, especially when you want the embedding layer to
+/// hide internal helper frames.
 pub let eval_flag_backtrace_barrier : Int = 1 << 6
 
 ///|
 /// Enables async function and top-level async related evaluation behavior.
 ///
 /// Use this when the evaluated source should participate in QuickJS async
-/// execution semantics.
+/// execution semantics, such as scheduling Promise jobs that the host will
+/// later drive with `Runtime::execute_pending_job()`.
 pub let eval_flag_async : Int = 1 << 7
