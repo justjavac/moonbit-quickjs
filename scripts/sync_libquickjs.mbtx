@@ -1,0 +1,350 @@
+///|
+import {
+  "moonbitlang/core/json" @json,
+  "moonbitlang/x@0.4.41/sys",
+}
+
+///|
+struct ArtifactSpec {
+  name : String
+  source_library : Array[String]
+  target_dir : String
+  target_library : String
+} derive(Eq)
+
+///|
+struct CliConfig {
+  repo : String
+  run_id : String?
+  root : String
+}
+
+///|
+struct CommandResult {
+  status : Int
+  stdout : String
+  stderr : String
+  error : String
+} derive(FromJson)
+
+///|
+let artifacts : Array[ArtifactSpec] = [
+  {
+    name: "libquickjs-windows-x64",
+    source_library: ["lib", "quickjs.lib"],
+    target_dir: "windows-x64",
+    target_library: "quickjs.lib",
+  },
+  {
+    name: "libquickjs-macos-universal",
+    source_library: ["lib", "libquickjs.a"],
+    target_dir: "macos-universal",
+    target_library: "libquickjs.a",
+  },
+  {
+    name: "libquickjs-linux-x64",
+    source_library: ["lib", "libquickjs.a"],
+    target_dir: "linux-x64",
+    target_library: "libquickjs.a",
+  },
+]
+
+///|
+fn main() -> Unit raise {
+  let config = parse_args(@sys.get_cli_args())
+  let resolved_run_id = match config.run_id {
+    Some(run_id) => run_id
+    None => latest_successful_run_id(config.repo)
+  }
+
+  let download_dir = join_paths([
+    config.root,
+    "target",
+    "libquickjs-sync",
+  ])
+  let lib_root = join_paths([config.root, "lib"])
+
+  remove_tree(download_dir)
+  ensure_dir(download_dir)
+  ensure_dir(lib_root)
+
+  ignore(run_checked(
+    "gh",
+    [
+      "run",
+      "download",
+      resolved_run_id,
+      "--repo",
+      config.repo,
+      "--dir",
+      download_dir,
+    ],
+    cwd=config.root,
+    summary="download workflow artifacts",
+  ))
+
+  for artifact in artifacts {
+    copy_artifact(download_dir, lib_root, artifact)
+  }
+
+  copy_header(download_dir, config.root)
+  println(
+    "Updated vendored QuickJS libraries and header from \{config.repo} run \{resolved_run_id}.",
+  )
+}
+
+///|
+fn parse_args(raw_args : Array[String]) -> CliConfig raise {
+  let mut repo = "justjavac/libquickjs"
+  let mut run_id : String? = None
+  let mut root = current_working_dir()
+
+  for index = 1; index < raw_args.length(); {
+    match raw_args[index] {
+      "--repo" => {
+        repo = required_arg(raw_args, index, "--repo")
+        continue index + 2
+      }
+      "--run-id" => {
+        run_id = Some(required_arg(raw_args, index, "--run-id"))
+        continue index + 2
+      }
+      "--root" => {
+        root = required_arg(raw_args, index, "--root")
+        continue index + 2
+      }
+      "--help" | "-h" | "help" => {
+        print_usage()
+        @sys.exit(0)
+      }
+      unknown => die("Unknown argument: \{unknown}")
+    }
+  } nobreak {
+    { repo, run_id, root }
+  }
+}
+
+///|
+fn required_arg(args : Array[String], index : Int, flag : String) -> String raise {
+  guard index + 1 < args.length() else {
+    die("Missing value for \{flag}.")
+  }
+  args[index + 1]
+}
+
+///|
+fn print_usage() -> Unit {
+  let usage =
+    #|Usage: moon run --target js scripts/sync_libquickjs.mbtx [--repo owner/name] [--run-id 123] [--root /path/to/repo]
+    #|
+    #|Downloads the latest successful QuickJS build artifacts from GitHub Actions
+    #|and syncs vendored libraries plus src/quickjs.h into this repository.
+    #|
+    #|Tip:
+    #|  Use `help` instead of `--help` when running through `moon run`.
+    #|
+    #|Options:
+    #|  --repo    GitHub repository that publishes the artifacts. Default: justjavac/libquickjs
+    #|  --run-id  Workflow run id to download. Defaults to the latest successful `build` run.
+    #|  --root    Repository root to update. Defaults to the current working directory.
+    #|
+  println(usage)
+}
+
+///|
+fn latest_successful_run_id(repo : String) -> String raise {
+  let output = run_checked(
+    "gh",
+    [
+      "run",
+      "list",
+      "--repo",
+      repo,
+      "--workflow",
+      "build",
+      "--status",
+      "completed",
+      "--limit",
+      "20",
+      "--json",
+      "databaseId,conclusion",
+      "--jq",
+      "map(select(.conclusion == \"success\"))[0].databaseId",
+    ],
+    summary="list workflow runs",
+  )
+  let run_id = output.stdout.trim().to_string()
+  if run_id != "" && run_id != "null" {
+    run_id
+  } else {
+    die("No successful `build` workflow run found in \{repo}.")
+  }
+}
+
+///|
+fn copy_artifact(
+  download_root : String,
+  lib_root : String,
+  artifact : ArtifactSpec,
+) -> Unit raise {
+  let artifact_root = join_paths([download_root, artifact.name])
+  require_exists(artifact_root, "Downloaded artifact root")
+
+  let target_dir = join_paths([lib_root, artifact.target_dir])
+  ensure_dir(target_dir)
+
+  copy_required_file(
+    join_parts(artifact_root, artifact.source_library),
+    join_paths([target_dir, artifact.target_library]),
+    "artifact library",
+  )
+  copy_required_file(
+    join_paths([artifact_root, "BUILD_INFO.txt"]),
+    join_paths([target_dir, "BUILD_INFO.txt"]),
+    "artifact build info",
+  )
+}
+
+///|
+fn copy_header(download_root : String, root : String) -> Unit raise {
+  for artifact in artifacts {
+    let candidate = join_paths([
+      download_root,
+      artifact.name,
+      "include",
+      "quickjs",
+      "quickjs.h",
+    ])
+    if path_exists(candidate) {
+      copy_required_file(
+        candidate,
+        join_paths([root, "src", "quickjs.h"]),
+        "quickjs header",
+      )
+      return
+    }
+  }
+  die("Downloaded artifacts do not contain include/quickjs/quickjs.h.")
+}
+
+///|
+fn copy_required_file(
+  source : String,
+  target : String,
+  description : String,
+) -> Unit raise {
+  require_exists(source, description)
+  copy_file(source, target)
+}
+
+///|
+fn require_exists(path : String, description : String) -> Unit raise {
+  if !path_exists(path) {
+    die("\{description} is missing: \{path}")
+  }
+}
+
+///|
+fn[T : FromJson] decode_json(text : String) -> T {
+  try! @json.from_json(try! @json.parse(text))
+}
+
+///|
+fn run_checked(
+  command : String,
+  args : Array[String],
+  cwd? : String = "",
+  summary~ : String,
+) -> CommandResult raise {
+  let result : CommandResult = decode_json(run_command_json(command, args, cwd))
+  if result.status != 0 {
+    let details =
+      if result.stderr != "" {
+        result.stderr
+      } else if result.stdout != "" {
+        result.stdout
+      } else if result.error != "" {
+        result.error
+      } else {
+        "command exited with status \{result.status}"
+      }
+    die("Failed to \{summary}: \{details}")
+  }
+  result
+}
+
+///|
+fn join_parts(base : String, parts : Array[String]) -> String {
+  let all_parts = [base]
+  for part in parts {
+    all_parts.push(part)
+  }
+  join_paths(all_parts)
+}
+
+///|
+fn[T] die(message : String) -> T raise {
+  fail(message)
+}
+
+///|
+extern "js" fn current_working_dir() -> String =
+  #| function() {
+  #|   return process.cwd();
+  #| }
+
+///|
+extern "js" fn join_paths(parts : Array[String]) -> String =
+  #| function(parts) {
+  #|   const path = require("node:path");
+  #|   return path.join(...parts);
+  #| }
+
+///|
+extern "js" fn path_exists(path : String) -> Bool =
+  #| function(path) {
+  #|   const fs = require("node:fs");
+  #|   return fs.existsSync(path);
+  #| }
+
+///|
+extern "js" fn ensure_dir(path : String) -> Unit =
+  #| function(path) {
+  #|   const fs = require("node:fs");
+  #|   fs.mkdirSync(path, { recursive: true });
+  #| }
+
+///|
+extern "js" fn remove_tree(path : String) -> Unit =
+  #| function(path) {
+  #|   const fs = require("node:fs");
+  #|   fs.rmSync(path, { recursive: true, force: true });
+  #| }
+
+///|
+extern "js" fn copy_file(source : String, target : String) -> Unit =
+  #| function(source, target) {
+  #|   const fs = require("node:fs");
+  #|   fs.copyFileSync(source, target);
+  #| }
+
+///|
+extern "js" fn run_command_json(
+  command : String,
+  args : Array[String],
+  cwd : String,
+) -> String =
+  #| function(command, args, cwd) {
+  #|   const { spawnSync } = require("node:child_process");
+  #|   const result = spawnSync(command, args, {
+  #|     cwd: cwd === "" ? undefined : cwd,
+  #|     encoding: "utf8",
+  #|     stdio: "pipe",
+  #|   });
+  #|   return JSON.stringify({
+  #|     status: result.status === null ? -1 : result.status,
+  #|     stdout: result.stdout || "",
+  #|     stderr: result.stderr || "",
+  #|     error: result.error ? String(result.error.message || result.error) : "",
+  #|   });
+  #| }
