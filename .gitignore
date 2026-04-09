@@ -1,6 +1,26 @@
-/.mooncakes/
-/_build/
-/src/pkg.generated.mbti
-/_tmp_qjs_check.c
-/_tmp_qjs_check.exe
-/_tmp_qjs_check.obj
+# MoonBit build artifacts
+_build/
+target/
+.mooncakes/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.bak
+*.orig
+
+# Coverage-related files
+moonbit-coverage-*.txt
+_coverage
+bisect.coverage
