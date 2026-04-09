@@ -5,3 +5,4 @@ library_dir=lib
 include_dir=include/quickjs
 exported_header=quickjs.h
 Extra link flag for consumers: -lm
+Build note: static archive compiled with -fPIC for shared-library consumers

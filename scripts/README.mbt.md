@@ -26,3 +26,6 @@ Notes:
 - Uses the GitHub CLI `gh`
 - Defaults to repository `justjavac/libquickjs`
 - Defaults to the latest successful `build` workflow run
+- The Linux vendored archive must be built with `-fPIC`, because downstream
+  examples and path dependencies may link `justjavac/quickjs` into a shared
+  object during native builds
