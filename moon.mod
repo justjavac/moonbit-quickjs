@@ -1,11 +1,11 @@
 name = "justjavac/quickjs"
 
-version = "0.1.3"
+version = "0.1.4"
 
 readme = "README.mbt.md"
 
 import {
-  "justjavac/ffi@0.2.2",
+  "justjavac/ffi@0.2.3",
 }
 
 repository = "https://github.com/justjavac/moonbit-quickjs"
