@@ -74,8 +74,7 @@ function main() {
       {
         package: "justjavac/quickjs",
         link_search_paths: [platformLibDir],
-        link_libs: ["quickjs"],
-        link_flags: "-lm",
+        link_libs: ["quickjs", "m"],
       },
     ],
   }));
