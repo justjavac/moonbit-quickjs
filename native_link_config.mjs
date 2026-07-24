@@ -30,10 +30,6 @@ function main() {
     requireFile(path.join(vendoredLibDir, "windows-x64", "quickjs.lib"));
     const quickjsStaticLib = nativeLinkPath(path.join(platformLibDir, "quickjs"));
     process.stdout.write(JSON.stringify({
-      vars: {
-        CC: "cl",
-        STUB_CC: "cl",
-      },
       link_configs: [
         {
           package: "justjavac/quickjs",
@@ -48,10 +44,6 @@ function main() {
     const platformLibDir = nativeLinkPath(path.join(vendoredLibDir, "macos-universal"));
     requireFile(path.join(vendoredLibDir, "macos-universal", "libquickjs.a"));
     process.stdout.write(JSON.stringify({
-      vars: {
-        CC: "clang",
-        STUB_CC: "clang",
-      },
       link_configs: [
         {
           package: "justjavac/quickjs",
@@ -66,10 +58,6 @@ function main() {
   const platformLibDir = nativeLinkPath(path.join(vendoredLibDir, "linux-x64"));
   requireFile(path.join(vendoredLibDir, "linux-x64", "libquickjs.a"));
   process.stdout.write(JSON.stringify({
-    vars: {
-      CC: "gcc",
-      STUB_CC: "gcc",
-    },
     link_configs: [
       {
         package: "justjavac/quickjs",

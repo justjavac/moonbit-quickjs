@@ -1,11 +1,11 @@
 name = "justjavac/quickjs"
 
-version = "0.1.4"
+version = "0.1.5"
 
 readme = "README.mbt.md"
 
 import {
-  "justjavac/ffi@0.2.3",
+  "justjavac/ffi@0.2.4",
 }
 
 repository = "https://github.com/justjavac/moonbit-quickjs"
@@ -20,8 +20,9 @@ warnings = ""
 
 preferred_target = "native"
 
+source = "src"
+
 options(
-  source: "src",
   supported_targets: "+native",
   "--moonbit-unstable-prebuild": "native_link_config.mjs",
 )

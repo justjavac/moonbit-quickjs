@@ -5,6 +5,5 @@ import {
 supported_targets = "+native"
 
 options(
-  link: { "native": { "cc": "${build.CC}", "stub-cc": "${build.STUB_CC}" } },
   "native-stub": [ "stub.c" ],
 )
