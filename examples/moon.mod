@@ -3,7 +3,7 @@ name = "justjavac/quickjs_examples"
 version = "0.1.0"
 
 import {
-  "justjavac/quickjs@0.1.4",
+  "justjavac/quickjs@0.1.5",
 }
 
 readme = "README.md"
