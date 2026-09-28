@@ -7,14 +7,14 @@
 ///
 /// # Lifecycle
 ///
-/// - Create the runtime with `Runtime::new()`
+/// - Create the runtime with `@quickjs.Runtime::new()`
 /// - Create contexts with `Runtime::new_context()`
 /// - Destroy all `Value` and `Context` handles before `Runtime::destroy()`
 ///
 /// # Example
 /// ```mbt check
 /// test {
-///   let runtime = Runtime::new()
+///   let runtime = @quickjs.Runtime::new()
 ///   let context = runtime.new_context()
 ///   let result = context.eval("1 + 2")
 ///   inspect(result.to_int32(context), content="3")
@@ -36,8 +36,8 @@ pub type Runtime
 /// # Example
 /// ```mbt check
 /// test {
-///   let runtime = Runtime::new()
-///   let context = Context::new(runtime)
+///   let runtime = @quickjs.Runtime::new()
+///   let context = @quickjs.Context::new(runtime)
 ///   let value = context.eval("'moon' + 'bit'")
 ///   inspect(value.to_string_lossy(context), content="moonbit")
 ///   value.destroy()
@@ -59,7 +59,7 @@ pub type Context
 /// # Example
 /// ```mbt check
 /// test {
-///   let runtime = Runtime::new()
+///   let runtime = @quickjs.Runtime::new()
 ///   let context = runtime.new_context()
 ///   let value = context.new_bool(true)
 ///   inspect(value.to_bool(context), content="true")

@@ -1,6 +1,6 @@
 ///|
 test "constructors conversions and property access" {
-  let runtime = Runtime::new()
+  let runtime = @quickjs.Runtime::new()
   defer runtime.destroy()
   let context = runtime.new_context()
   defer context.destroy()
@@ -49,7 +49,7 @@ test "constructors conversions and property access" {
 
 ///|
 test "arrays null undefined and json stringify" {
-  let runtime = Runtime::new()
+  let runtime = @quickjs.Runtime::new()
   defer runtime.destroy()
   let context = runtime.new_context()
   defer context.destroy()
@@ -94,7 +94,7 @@ test "arrays null undefined and json stringify" {
 
 ///|
 test "parse_json supports nested object traversal" {
-  let runtime = Runtime::new()
+  let runtime = @quickjs.Runtime::new()
   defer runtime.destroy()
   let context = runtime.new_context()
   defer context.destroy()

@@ -97,7 +97,7 @@ pub fn Runtime::is_job_pending(self : Runtime) -> Bool {
 /// # Example
 /// ```mbt check
 /// test {
-///   let runtime = Runtime::new()
+///   let runtime = @quickjs.Runtime::new()
 ///   defer runtime.destroy()
 ///   let context = runtime.new_context()
 ///   defer context.destroy()

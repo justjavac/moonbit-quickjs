@@ -1,6 +1,6 @@
 ///|
 test "runtime settings and pending jobs" {
-  let runtime = Runtime::new()
+  let runtime = @quickjs.Runtime::new()
   defer runtime.destroy()
   let context = runtime.new_context()
   defer context.destroy()
@@ -36,10 +36,10 @@ test "runtime settings and pending jobs" {
 
 ///|
 test "context constructor is equivalent to runtime.new_context" {
-  let runtime = Runtime::new()
+  let runtime = @quickjs.Runtime::new()
   defer runtime.destroy()
 
-  let context = Context::new(runtime)
+  let context = @quickjs.Context::new(runtime)
   defer context.destroy()
 
   let value = context.eval("6 * 7")

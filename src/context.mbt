@@ -29,7 +29,7 @@ pub fn Context::destroy(self : Context) -> Unit {
 /// # Example
 /// ```mbt check
 /// test {
-///   let runtime = Runtime::new()
+///   let runtime = @quickjs.Runtime::new()
 ///   let context = runtime.new_context()
 ///   let value = context.eval("40 + 2")
 ///   inspect(value.to_int32(context), content="42")
@@ -42,7 +42,7 @@ pub fn Context::destroy(self : Context) -> Unit {
 /// # Error Handling
 /// ```mbt check
 /// test {
-///   let runtime = Runtime::new()
+///   let runtime = @quickjs.Runtime::new()
 ///   defer runtime.destroy()
 ///   let context = runtime.new_context()
 ///   defer context.destroy()
@@ -72,7 +72,7 @@ pub fn Context::eval(
 /// # Example
 /// ```mbt check
 /// test {
-///   let runtime = Runtime::new()
+///   let runtime = @quickjs.Runtime::new()
 ///   defer runtime.destroy()
 ///   let context = runtime.new_context()
 ///   defer context.destroy()
@@ -103,7 +103,7 @@ pub fn Context::global_object(self : Context) -> Value {
 /// # Example
 /// ```mbt check
 /// test {
-///   let runtime = Runtime::new()
+///   let runtime = @quickjs.Runtime::new()
 ///   defer runtime.destroy()
 ///   let context = runtime.new_context()
 ///   defer context.destroy()
@@ -214,7 +214,7 @@ pub fn Context::undefined(self : Context) -> Value {
 /// # Example
 /// ```mbt check
 /// test {
-///   let runtime = Runtime::new()
+///   let runtime = @quickjs.Runtime::new()
 ///   defer runtime.destroy()
 ///   let context = runtime.new_context()
 ///   defer context.destroy()
@@ -252,7 +252,7 @@ pub fn Context::parse_json(
 /// # Example
 /// ```mbt check
 /// test {
-///   let runtime = Runtime::new()
+///   let runtime = @quickjs.Runtime::new()
 ///   defer runtime.destroy()
 ///   let context = runtime.new_context()
 ///   defer context.destroy()

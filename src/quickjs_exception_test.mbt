@@ -1,6 +1,6 @@
 ///|
 test "exceptions expose message and object" {
-  let runtime = Runtime::new()
+  let runtime = @quickjs.Runtime::new()
   defer runtime.destroy()
   let context = runtime.new_context()
   defer context.destroy()

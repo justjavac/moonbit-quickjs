@@ -1,8 +1,8 @@
 ///|
 /// Fails the current test if the value is an exception.
 fn guard_success(
-  context : Context,
-  value : Value,
+  context : @quickjs.Context,
+  value : @quickjs.Value,
   action : String,
 ) -> Unit raise {
   guard !value.is_exception() else {
@@ -15,7 +15,7 @@ fn guard_success(
 ///|
 /// Fails the current test if a property write reported an error.
 fn guard_property_status(
-  context : Context,
+  context : @quickjs.Context,
   status : Int,
   action : String,
 ) -> Unit raise {
