@@ -15,7 +15,7 @@ extern "C" fn quickjs_value_set_property_str(
   target : Value,
   property_name : Bytes,
   property : Value,
-) -> Int = "moonbit_quickjs_value_set_property_str"
+) -> Int32 = "moonbit_quickjs_value_set_property_str"
 
 ///|
 /// Reads an indexed property from an array-like JavaScript value.
@@ -23,7 +23,7 @@ extern "C" fn quickjs_value_set_property_str(
 extern "C" fn quickjs_value_get_property_uint32(
   context : Context,
   target : Value,
-  index : UInt,
+  index : UInt32,
 ) -> Value = "moonbit_quickjs_value_get_property_uint32"
 
 ///|
@@ -32,9 +32,9 @@ extern "C" fn quickjs_value_get_property_uint32(
 extern "C" fn quickjs_value_set_property_uint32(
   context : Context,
   target : Value,
-  index : UInt,
+  index : UInt32,
   property : Value,
-) -> Int = "moonbit_quickjs_value_set_property_uint32"
+) -> Int32 = "moonbit_quickjs_value_set_property_uint32"
 
 ///|
 /// Releases the native value handle immediately.

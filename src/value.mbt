@@ -128,7 +128,7 @@ pub fn Value::set_property(
   context : Context,
   name : String,
   property : Value,
-) -> Int {
+) -> Int32 {
   quickjs_value_set_property_str(context, self, @ffi.to_cstr(name), property)
 }
 
@@ -138,7 +138,11 @@ pub fn Value::set_property(
 /// The returned property is a new handle owned by the caller. This is useful
 /// for traversing arrays, tuples, and array-like objects exposed from
 /// JavaScript.
-pub fn Value::get_index(self : Value, context : Context, index : UInt) -> Value {
+pub fn Value::get_index(
+  self : Value,
+  context : Context,
+  index : UInt32,
+) -> Value {
   quickjs_value_get_property_uint32(context, self, index)
 }
 
@@ -173,9 +177,9 @@ pub fn Value::get_index(self : Value, context : Context, index : UInt) -> Value 
 pub fn Value::set_index(
   self : Value,
   context : Context,
-  index : UInt,
+  index : UInt32,
   property : Value,
-) -> Int {
+) -> Int32 {
   quickjs_value_set_property_uint32(context, self, index, property)
 }
 
@@ -184,7 +188,7 @@ pub fn Value::set_index(
 ///
 /// This delegates to `Context::to_int32()` and therefore follows the same
 /// QuickJS coercion rules used during script execution.
-pub fn Value::to_int32(self : Value, context : Context) -> Int {
+pub fn Value::to_int32(self : Value, context : Context) -> Int32 {
   context.to_int32(self)
 }
 

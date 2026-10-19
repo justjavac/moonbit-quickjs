@@ -56,8 +56,8 @@ pub fn Context::destroy(self : Context) -> Unit {
 pub fn Context::eval(
   self : Context,
   code : String,
-  filename? : String = "<eval>",
-  flags? : Int = eval_type_global,
+  filename~ : String = "<eval>",
+  flags~ : Int32 = eval_type_global,
 ) -> Value {
   quickjs_context_eval(self, @ffi.to_cstr(code), @ffi.to_cstr(filename), flags)
 }
@@ -164,7 +164,7 @@ pub fn Context::new_string(self : Context, text : String) -> Value {
 ///
 /// This is useful when preparing arguments or object properties from MoonBit
 /// without going through JavaScript source text.
-pub fn Context::new_int32(self : Context, value : Int) -> Value {
+pub fn Context::new_int32(self : Context, value : Int32) -> Value {
   quickjs_context_new_int32(self, value)
 }
 
@@ -236,7 +236,7 @@ pub fn Context::undefined(self : Context) -> Value {
 pub fn Context::parse_json(
   self : Context,
   text : String,
-  filename? : String = "<json>",
+  filename~ : String = "<json>",
 ) -> Value {
   quickjs_context_parse_json(self, @ffi.to_cstr(text), @ffi.to_cstr(filename))
 }
@@ -282,7 +282,7 @@ pub fn Context::json_stringify(self : Context, value : Value) -> Value {
 /// This applies QuickJS numeric coercion rules before returning the MoonBit
 /// `Int`. Use this when host code wants the converted number immediately
 /// without calling the equivalent helper on `Value`.
-pub fn Context::to_int32(self : Context, value : Value) -> Int {
+pub fn Context::to_int32(self : Context, value : Value) -> Int32 {
   quickjs_value_to_int32(self, value)
 }
 

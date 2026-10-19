@@ -16,7 +16,7 @@ fn guard_success(
 /// Fails the current test if a property write reported an error.
 fn guard_property_status(
   context : @quickjs.Context,
-  status : Int,
+  status : Int32,
   action : String,
 ) -> Unit raise {
   guard status >= 0 else { fail(action + ": " + context.exception_message()) }

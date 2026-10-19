@@ -116,7 +116,7 @@ pub fn Runtime::is_job_pending(self : Runtime) -> Bool {
 ///   inspect(result.to_int32(context), content="42")
 /// }
 /// ```
-pub fn Runtime::execute_pending_job(self : Runtime) -> Int {
+pub fn Runtime::execute_pending_job(self : Runtime) -> Int32 {
   quickjs_runtime_execute_pending_job(self)
 }
 

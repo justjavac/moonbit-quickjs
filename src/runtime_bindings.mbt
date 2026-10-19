@@ -62,4 +62,4 @@ extern "C" fn quickjs_runtime_is_job_pending(runtime : Runtime) -> Bool = "moonb
 ///|
 /// Runs one pending job from the QuickJS job queue.
 #borrow(runtime)
-extern "C" fn quickjs_runtime_execute_pending_job(runtime : Runtime) -> Int = "moonbit_quickjs_runtime_execute_pending_job"
+extern "C" fn quickjs_runtime_execute_pending_job(runtime : Runtime) -> Int32 = "moonbit_quickjs_runtime_execute_pending_job"

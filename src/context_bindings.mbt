@@ -15,7 +15,7 @@ extern "C" fn quickjs_context_eval(
   context : Context,
   code : Bytes,
   filename : Bytes,
-  flags : Int,
+  flags : Int32,
 ) -> Value = "moonbit_quickjs_context_eval"
 
 ///|
@@ -56,7 +56,7 @@ extern "C" fn quickjs_context_new_string(
 #borrow(context)
 extern "C" fn quickjs_context_new_int32(
   context : Context,
-  value : Int,
+  value : Int32,
 ) -> Value = "moonbit_quickjs_context_new_int32"
 
 ///|
@@ -105,7 +105,7 @@ extern "C" fn quickjs_context_json_stringify(
 ///|
 /// Converts a JavaScript value into a 32-bit integer.
 #borrow(context, value)
-extern "C" fn quickjs_value_to_int32(context : Context, value : Value) -> Int = "moonbit_quickjs_value_to_int32"
+extern "C" fn quickjs_value_to_int32(context : Context, value : Value) -> Int32 = "moonbit_quickjs_value_to_int32"
 
 ///|
 /// Converts a JavaScript value into a floating-point number.
