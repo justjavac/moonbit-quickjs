@@ -5,7 +5,7 @@ version = "0.1.0"
 // Resolved from the workspace member (the package under development), so the
 // examples exercise the QuickJS C sources compiled as native stubs.
 import {
-  "justjavac/quickjs@0.1.7",
+  "justjavac/quickjs@0.2.0",
 }
 
 readme = "README.md"
