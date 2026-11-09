@@ -1,9 +1,20 @@
 import {
-  "justjavac/ffi",
+  "moonbit-community/ffi",
 }
 
 supported_targets = "+native"
 
+// QuickJS is compiled from the vendored C sources in this package instead of
+// being linked from a prebuilt quickjs.lib / libquickjs.a. Every stub is
+// compiled by moon's native backend and linked into the final executable.
+// See scripts/vendor_quickjs.py for how these sources are produced.
 options(
-  "native-stub": [ "stub.c" ],
+  "native-stub": [
+    "stub.c",
+    "quickjs.c",
+    "cutils.c",
+    "dtoa.c",
+    "libregexp.c",
+    "libunicode.c",
+  ],
 )

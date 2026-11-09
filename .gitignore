@@ -19,6 +19,7 @@ Desktop.ini
 *.log
 *.bak
 *.orig
+a.out
 
 # Coverage-related files
 moonbit-coverage-*.txt

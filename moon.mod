@@ -5,7 +5,7 @@ version = "0.1.7"
 readme = "README.mbt.md"
 
 import {
-  "justjavac/ffi@0.2.4",
+  "moonbit-community/ffi@0.1.14",
 }
 
 repository = "https://github.com/justjavac/moonbit-quickjs"
@@ -24,5 +24,4 @@ source = "src"
 
 options(
   supported_targets: "+native",
-  "--moonbit-unstable-prebuild": "native_link_config.mjs",
 )

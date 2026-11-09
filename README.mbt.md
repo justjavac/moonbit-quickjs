@@ -33,6 +33,6 @@ test {
 ## Features
 
 - Native-only MoonBit package built on top of a small FFI surface
-- Vendored QuickJS libraries for Windows, Linux, and macOS
+- QuickJS engine compiled from vendored C sources on Windows, Linux, and macOS
 - Explicit lifecycle management for runtimes, contexts, and values
 - Routines for evaluation, JSON parsing, property access, and Promise jobs

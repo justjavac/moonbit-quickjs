@@ -2,21 +2,21 @@
 package "justjavac/quickjs"
 
 // Values
-pub let eval_flag_async : Int
+pub let eval_flag_async : Int32
 
-pub let eval_flag_backtrace_barrier : Int
+pub let eval_flag_backtrace_barrier : Int32
 
-pub let eval_flag_compile_only : Int
+pub let eval_flag_compile_only : Int32
 
-pub let eval_flag_strict : Int
+pub let eval_flag_strict : Int32
 
-pub let eval_type_direct : Int
+pub let eval_type_direct : Int32
 
-pub let eval_type_global : Int
+pub let eval_type_global : Int32
 
-pub let eval_type_indirect : Int
+pub let eval_type_indirect : Int32
 
-pub let eval_type_module : Int
+pub let eval_type_module : Int32
 
 // Errors
 
@@ -24,7 +24,7 @@ pub let eval_type_module : Int
 #external
 pub type Context
 pub fn Context::destroy(Self) -> Unit
-pub fn Context::eval(Self, String, filename? : String, flags? : Int) -> Value
+pub fn Context::eval(Self, String, filename? : String, flags? : Int32) -> Value
 pub fn Context::exception_message(Self) -> String
 pub fn Context::get_exception(Self) -> Value
 pub fn Context::global_object(Self) -> Value
@@ -33,21 +33,21 @@ pub fn Context::new(Runtime) -> Self
 pub fn Context::new_array(Self) -> Value
 pub fn Context::new_bool(Self, Bool) -> Value
 pub fn Context::new_float64(Self, Double) -> Value
-pub fn Context::new_int32(Self, Int) -> Value
+pub fn Context::new_int32(Self, Int32) -> Value
 pub fn Context::new_object(Self) -> Value
 pub fn Context::new_string(Self, String) -> Value
 pub fn Context::null(Self) -> Value
 pub fn Context::parse_json(Self, String, filename? : String) -> Value
 pub fn Context::to_bool(Self, Value) -> Bool
 pub fn Context::to_float64(Self, Value) -> Double
-pub fn Context::to_int32(Self, Value) -> Int
+pub fn Context::to_int32(Self, Value) -> Int32
 pub fn Context::to_string_lossy(Self, Value) -> String
 pub fn Context::undefined(Self) -> Value
 
 #external
 pub type Runtime
 pub fn Runtime::destroy(Self) -> Unit
-pub fn Runtime::execute_pending_job(Self) -> Int
+pub fn Runtime::execute_pending_job(Self) -> Int32
 pub fn Runtime::is_job_pending(Self) -> Bool
 pub fn Runtime::new() -> Self
 pub fn Runtime::new_context(Self) -> Context
@@ -63,7 +63,7 @@ pub fn Runtime::update_stack_top(Self) -> Unit
 pub type Value
 pub fn Value::destroy(Self) -> Unit
 pub fn Value::dup(Self) -> Self
-pub fn Value::get_index(Self, Context, UInt) -> Self
+pub fn Value::get_index(Self, Context, UInt32) -> Self
 pub fn Value::get_property(Self, Context, String) -> Self
 pub fn Value::is_bool(Self) -> Bool
 pub fn Value::is_exception(Self) -> Bool
@@ -72,11 +72,11 @@ pub fn Value::is_number(Self) -> Bool
 pub fn Value::is_object(Self) -> Bool
 pub fn Value::is_string(Self) -> Bool
 pub fn Value::is_undefined(Self) -> Bool
-pub fn Value::set_index(Self, Context, UInt, Self) -> Int
-pub fn Value::set_property(Self, Context, String, Self) -> Int
+pub fn Value::set_index(Self, Context, UInt32, Self) -> Int32
+pub fn Value::set_property(Self, Context, String, Self) -> Int32
 pub fn Value::to_bool(Self, Context) -> Bool
 pub fn Value::to_float64(Self, Context) -> Double
-pub fn Value::to_int32(Self, Context) -> Int
+pub fn Value::to_int32(Self, Context) -> Int32
 pub fn Value::to_string_lossy(Self, Context) -> String
 
 // Type aliases
