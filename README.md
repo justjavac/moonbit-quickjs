@@ -8,13 +8,15 @@
 MoonBit bindings for the [QuickJS](https://bellard.org/quickjs/) JavaScript engine.
 
 This package provides a small high-level MoonBit API over QuickJS runtimes,
-contexts, and values. It ships vendored native libraries for the supported
-platforms so downstream users do not need to build QuickJS themselves.
+contexts, and values. The QuickJS engine is vendored as C source and compiled
+by MoonBit's native backend on every build — there are no prebuilt `.lib` / `.a`
+files, no Node.js prebuild script, and nothing to install before `moon add`.
 
 ## Features
 
 - Native-only MoonBit package built on top of a small FFI surface
-- Vendored QuickJS libraries for Windows, Linux, and macOS
+- QuickJS compiled from vendored C sources as `native-stub` files on Windows,
+  Linux, and macOS
 - Explicit lifecycle management for runtimes, contexts, and values
 - Routines for evaluation, JSON parsing, property access, and Promise jobs
 
@@ -25,11 +27,18 @@ The package is configured with:
 - `preferred-target: native`
 - `supported_targets: +native`
 
-Vendored libraries are included for:
+The vendored C sources compile with whatever C compiler MoonBit uses for the
+native backend, so the CRT and ABI always match the final executable:
 
-- `windows-x64`
-- `linux-x64`
-- `macos-universal`
+- `windows-x64` — MSVC `cl.exe` (static CRT, no separate runtime to install)
+- `linux-x64` — `gcc` / `clang`
+- `macos` — `clang`
+
+Only the engine core is built (`quickjs.c`, `cutils.c`, `dtoa.c`,
+`libregexp.c`, `libunicode.c`); `quickjs-libc.c` and the `qjs` CLI are excluded.
+The bindings use `JS_NewRuntime` / `JS_NewContext` directly, so no libc
+helpers are needed. Atomics are disabled on Windows (no pthread dependency),
+matching the previous prebuilt library.
 
 ## Install
 
@@ -167,35 +176,53 @@ moon test --target native -v
 moon coverage analyze -p justjavac/quickjs -- -f summary
 moon coverage analyze -p justjavac/quickjs -- -f cobertura -o coverage-windows.xml
 moon -C examples check --target native
-moon run --target native scripts/sync_libquickjs.mbtx help
+python scripts/vendor_quickjs.py --check --source target/quickjs-src
 ```
 
-## Refreshing Vendored QuickJS Artifacts
+## Vendored QuickJS C Sources
 
-The repository includes [`sync_libquickjs.mbtx`](./scripts/sync_libquickjs.mbtx),
-a native MoonBit script that:
+`src/` contains the QuickJS engine sources from
+[bellard/quickjs](https://github.com/bellard/quickjs.git), version `2025-09-13`
+(commit `d7ae12ae71dfd6ab2997527d295014a8996fa0f9`). They are listed in
+`src/moon.pkg` under `native-stub`, so `moon` compiles and links them together
+with `stub.c` for every native build.
 
-- resolves the latest successful `build` run from `justjavac/libquickjs` by default
-- downloads the workflow artifacts with `gh run download`
-- updates vendored libraries under `lib/`
-- updates `src/quickjs.h`
+The sources carry the MSVC compatibility patches that the previous CMake-based
+static library build applied at configure time. They are now part of the
+checked-in source, so no build-time flags or Node.js `prebuild` hook are needed:
 
-Examples:
+- `quickjs_build.h` — fixes `CONFIG_VERSION`, defines the CRT/NOMINMAX macros,
+  and force-includes `compat/msvc_compat.h` on MSVC (`__builtin_*`,
+  `__attribute__`, etc.)
+- `compat/sys/time.h` — provides `gettimeofday` on Windows and falls through to
+  the system header elsewhere
+- `quickjs.c` — disables computed-goto dispatch and Atomics on Windows, replaces
+  division-by-zero constants with `INFINITY`, removes the `(JSValue)` casts that
+  MSVC rejects, and widens the 3-bit closure bitfield to `uint8_t`
+- `src/quickjs.h` is the exported header with `return v;` instead of
+  `return (JSValue)v;`
+
+To refresh the vendored sources from an upstream checkout:
 
 ```text
-moon run --target native scripts/sync_libquickjs.mbtx help
-moon run --target native scripts/sync_libquickjs.mbtx
-moon run --target native scripts/sync_libquickjs.mbtx --run-id 123456789
-moon run --target native scripts/sync_libquickjs.mbtx --repo justjavac/libquickjs
+git clone https://github.com/bellard/quickjs.git target/quickjs-src
+git -C target/quickjs-src checkout d7ae12ae71dfd6ab2997527d295014a8996fa0f9
+python scripts/vendor_quickjs.py --source target/quickjs-src
+moon test --target native
 ```
 
-Requirements:
-
-- GitHub CLI `gh` installed
-- `gh auth login` already completed
+`python scripts/vendor_quickjs.py --check --source ...` verifies that the
+checked-in files still match a fresh vendor run. If upstream changes enough
+that a patch no longer applies, the script fails loudly instead of silently
+emitting an unbuildable source. The only requirements are Python 3 and a local
+QuickJS checkout — no `gh`, no Node.js, no CMake.
 
 More script-specific notes live in [scripts/README.mbt.md](./scripts/README.mbt.md).
 
 ## License
 
-This package is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
+The MoonBit bindings are licensed under the MIT License; see
+[LICENSE](./LICENSE). The vendored QuickJS engine sources under `src/` are
+licensed under their own MIT license, reproduced in
+[src/LICENSE-quickjs](./src/LICENSE-quickjs). The upstream copyright notice is
+shipped with the sources and is included in published packages.
